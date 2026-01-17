@@ -1,6 +1,6 @@
 const cloudinary = require("../utils/cloudinary");
 
-const uploadToCloudinary = async (file) => {
+const uploadToCloudStorage = async (file) => {
   try {
     if (!file) return null;
 
@@ -26,4 +26,16 @@ const uploadToCloudinary = async (file) => {
   }
 };
 
-module.exports = { uploadToCloudinary };
+const deleteFromCloudStorage = async (publicId) => {
+  try {
+    if (!publicId) return;
+
+    const result = await cloudinary.uploader.destroy(publicId);
+    return result;
+  } catch (error) {
+    console.error("Cloudinary delete failed:", error);
+    throw error;
+  }
+};
+
+module.exports = { uploadToCloudStorage, deleteFromCloudStorage };

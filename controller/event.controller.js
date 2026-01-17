@@ -1,12 +1,15 @@
 const Event = require("../models/Event");
 const registerationModel = require("../models/Registration");
-const { uploadToCloudinary } = require("../services/cloudStorage.service");
+const {
+  deleteFromCloudStorage,
+  uploadToCloudStorage,
+} = require("../services/cloudStorage.service");
 
 const eventCreate = async (req, res) => {
   let imageData = null;
 
   if (req.file) {
-    imageData = await uploadToCloudinary(req.file);
+    imageData = await uploadToCloudStorage(req.file);
   }
 
   try {
@@ -92,6 +95,9 @@ const eventDeletion = async (req, res) => {
     const eventId = req.params.eventId;
     const result = await Event.findByIdAndDelete(eventId);
     if (result) {
+      if (result.image && result.image.publicId) {
+        await deleteFromCloudStorage(result.image.publicId);
+      }
       return res.status(201).json({ message: "Event deleted successfully" });
     }
   } catch (error) {
