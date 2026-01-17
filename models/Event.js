@@ -2,12 +2,17 @@ const mongoose = require("mongoose");
 
 const eventSchema = new mongoose.Schema(
   {
-    imageUrl: {
-      type: String,
-      default:
-        "https://media.istockphoto.com/id/1218975473/photo/group-of-college-student-friends-meeting-and-talking-in-busy-communal-campus-building.jpg?s=612x612&w=0&k=20&c=ggYncioFDbZjXryC923y3Jmdc3uNFAsmZML-ftZYXYI=",
+    image: {
+      url: {
+        type: String,
+        default:
+          "https://media.istockphoto.cohttps://media.istockphoto.com/id/1218975473/photo/group-of-college-student-friends-meeting-and-talking-in-busy-communal-campus-building.jpg?s=612x612&w=0&k=20&c=ggYncioFDbZjXryC923y3Jmdc3uNFAsmZML-ftZYXYI=m/...",
+      },
+      publicId: {
+        type: String,
+        default: null,
+      },
     },
-
     title: {
       type: String,
       required: true,

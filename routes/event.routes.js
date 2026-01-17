@@ -7,11 +7,11 @@ const eligibilityRules = require("../middleware/eligibility.middleware");
 const eventController = require("../controller/event.controller");
 const handleValidationErrors = require("../middleware/handleValidationErrors.middleware");
 const router = express.Router();
-const uploadToCloudinary = require("../middleware/upload.middleware");
 
 const memoryStorage = multer.memoryStorage();
 const memoryParser = multer({ storage: memoryStorage });
 
+// Creation of events
 router.post(
   "/organizer/create",
   authMiddleware,
@@ -33,14 +33,26 @@ router.post(
     body("eligibilityRules.minAge").optional().isInt({ min: 0 }),
     body("eligibilityRules.maxAge").optional().isInt({ min: 1 }),
   ],
+
   handleValidationErrors,
-  uploadToCloudinary("image"),
 
   eventController.eventCreate,
 );
 
+// Deletion of events
+router.delete(
+  "/organizer/delete/:eventId",
+  authMiddleware,
+  roleMiddleware("ORGANIZER"),
+  [param("eventId").isMongoId().withMessage("Invalid event ID")],
+  handleValidationErrors,
+  eventController.eventDeletion,
+);
+
+// List of events
 router.get("/all", eventController.eventGetAll);
 
+// Event registeration
 router.post(
   "/user/register/:eventId",
   authMiddleware,

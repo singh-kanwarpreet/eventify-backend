@@ -1,10 +1,16 @@
 const Event = require("../models/Event");
 const registerationModel = require("../models/Registration");
+const { uploadToCloudinary } = require("../services/cloudStorage.service");
 
 const eventCreate = async (req, res) => {
+  let imageData = null;
+
+  if (req.file) {
+    imageData = await uploadToCloudinary(req.file);
+  }
+
   try {
     const {
-      imageUrl,
       title,
       description,
       dateTime,
@@ -20,12 +26,11 @@ const eventCreate = async (req, res) => {
       title: title,
     });
     if (existingEvent) {
-      return res
-        .status(400)
-        .json({
-          message: "You have already created an event with this title.",
-        });
+      return res.status(400).json({
+        message: "You have already created an event with this title.",
+      });
     }
+
     const event = await Event.create({
       title,
       description,
@@ -37,7 +42,7 @@ const eventCreate = async (req, res) => {
       status: "UPCOMING",
       organizerId: req.user._id,
       eligibilityRules: eligibilityRules || { minAge: 0, maxAge: 100 },
-      imageUrl,
+      image: imageData,
     });
 
     res.status(201).json({
@@ -82,4 +87,17 @@ const eventUserRegister = async (req, res) => {
   }
 };
 
-module.exports = { eventCreate, eventGetAll, eventUserRegister };
+const eventDeletion = async (req, res) => {
+  try {
+    const eventId = req.params.eventId;
+    const result = await Event.findByIdAndDelete(eventId);
+    if (result) {
+      return res.status(201).json({ message: "Event deleted successfully" });
+    }
+  } catch (error) {
+    console.error("Error deleting event:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+module.exports = { eventCreate, eventGetAll, eventUserRegister, eventDeletion };
