@@ -21,7 +21,7 @@ router.post(
   [
     body("title").notEmpty().withMessage("Title is required"),
     body("description").notEmpty().withMessage("Description is required"),
-    body("dateTime").isISO8601().withMessage("Valid dateTime is required"),
+    body("startTime").isISO8601().withMessage("Valid startTime is required"),
     body("endTime").isISO8601().withMessage("Valid endTime is required"),
     body("location").notEmpty().withMessage("Location is required"),
     body("mode")

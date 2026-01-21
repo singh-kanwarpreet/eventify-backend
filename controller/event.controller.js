@@ -16,7 +16,7 @@ const eventCreate = async (req, res) => {
     const {
       title,
       description,
-      dateTime,
+      startTime,
       endTime,
       location,
       mode,
@@ -37,7 +37,7 @@ const eventCreate = async (req, res) => {
     const event = await Event.create({
       title,
       description,
-      dateTime,
+      startTime,
       endTime,
       location,
       mode,
