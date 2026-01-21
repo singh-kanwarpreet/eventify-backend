@@ -8,10 +8,6 @@ const {
 const eventCreate = async (req, res) => {
   let imageData = null;
 
-  if (req.file) {
-    imageData = await uploadToCloudStorage(req.file);
-  }
-
   try {
     const {
       title,
@@ -23,7 +19,8 @@ const eventCreate = async (req, res) => {
       capacity,
       eligibilityRules,
     } = req.body;
-
+    const startTimeUTC = new Date(startTime).toISOString();
+    const endTimeUTC = new Date(endTime).toISOString();
     const existingEvent = await Event.findOne({
       organizerId: req.user._id,
       title: title,
@@ -33,19 +30,21 @@ const eventCreate = async (req, res) => {
         message: "You have already created an event with this title.",
       });
     }
-
+    if (req.file) {
+      imageData = await uploadToCloudStorage(req.file);
+    }
     const event = await Event.create({
       title,
       description,
-      startTime,
-      endTime,
+      startTime: startTimeUTC,
+      endTime: endTimeUTC,
       location,
       mode,
       capacity,
       status: "UPCOMING",
       organizerId: req.user._id,
       eligibilityRules: eligibilityRules || { minAge: 0, maxAge: 100 },
-      image: imageData,
+      ...(imageData && { image: imageData }),
     });
 
     res.status(201).json({
