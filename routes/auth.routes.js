@@ -4,9 +4,9 @@ const authController = require("../controller/auth.controller");
 const handleValidationErrors = require("../middleware/handleValidationErrors.middleware");
 const router = express.Router();
 
-// Signup
+// signup
 router.post(
-  "/user/signUp",
+  "/user/signup",
   [
     body("name").notEmpty().withMessage("Name is required"),
 
@@ -39,7 +39,7 @@ router.post(
       .withMessage("Description is required for organizers"),
   ],
   handleValidationErrors,
-  authController.signUp,
+  authController.signup,
 );
 
 // Login

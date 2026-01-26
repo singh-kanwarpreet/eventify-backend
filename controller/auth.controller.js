@@ -3,7 +3,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const organizerModel = require("../models/Organizer");
 
-const signUp = async (req, res) => {
+const signup = async (req, res) => {
   try {
     const {
       name,
@@ -126,4 +126,4 @@ const logOut = async (req, res) => {
   }
 };
 
-module.exports = { signUp, login, logOut };
+module.exports = { signup, login, logOut };
