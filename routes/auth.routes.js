@@ -2,6 +2,7 @@ const express = require("express");
 const { body } = require("express-validator");
 const authController = require("../controller/auth.controller");
 const handleValidationErrors = require("../middleware/handleValidationErrors.middleware");
+const authMiddleware = require("../middleware/auth.middleware");
 const router = express.Router();
 
 // signup
@@ -54,5 +55,7 @@ router.post(
 );
 
 router.get("/user/logout", authController.logOut);
+
+router.get("/remember-me",authMiddleware, authController.rememberMe);
 
 module.exports = router;

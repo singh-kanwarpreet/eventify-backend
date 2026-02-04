@@ -126,4 +126,16 @@ const logOut = async (req, res) => {
   }
 };
 
-module.exports = { signup, login, logOut };
+const rememberMe = async (req, res) => {
+  const user = req.user;
+  res.status(200).json({
+    user: {
+      id: user._id,
+      role: user.role,
+      email: user.email,
+      name: user.name,
+    },
+  });
+}
+
+module.exports = { signup, login, logOut, rememberMe };
