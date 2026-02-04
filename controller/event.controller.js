@@ -105,4 +105,40 @@ const eventDeletion = async (req, res) => {
   }
 };
 
-module.exports = { eventCreate, eventGetAll, eventUserRegister, eventDeletion };
+const eventGetById = async (req, res) => {
+  const { eventId } = req.params;
+  try {
+    const event = await Event.findById(eventId);
+    const isRegistered = await registerationModel.exists({
+      userId: req.user._id,
+      eventId: eventId,
+    });
+    const eventObj = event.toObject();
+    if (isRegistered) {
+      eventObj.isRegistered = true;
+    } else {
+      eventObj.isRegistered = false;
+    }
+    if (event) {
+      return res.status(200).json({ event: eventObj });
+    } else {
+      return res.status(404).json({ message: "Event not found" });
+    }
+  } catch (error) {
+    console.error("Error fetching event by ID:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+const eventGetUserRegistrations = async (req, res) => {
+  try {
+    const registrations = await registerationModel
+      .find({ userId: req.user._id });
+    res.status(200).json({ registrations });
+  } catch (error) {
+    console.error("Error fetching user registrations:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+module.exports = { eventCreate, eventGetAll, eventUserRegister, eventDeletion, eventGetById, eventGetUserRegistrations };

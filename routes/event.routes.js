@@ -50,11 +50,11 @@ router.delete(
 );
 
 // List of events
-router.get("/all", eventController.eventGetAll);
+router.get("/", eventController.eventGetAll);
 
 // Event registeration
 router.post(
-  "/user/register/:eventId",
+  "/register/:eventId",
   authMiddleware,
   roleMiddleware("USER"),
   [param("eventId").isMongoId().withMessage("Invalid event ID")],
@@ -62,5 +62,23 @@ router.post(
   eligibilityRules,
   eventController.eventUserRegister,
 );
+
+// Event details by ID
+router.get(
+  "/:eventId",
+  authMiddleware,
+  [param("eventId").isMongoId().withMessage("Invalid event ID")],
+  handleValidationErrors,
+  eventController.eventGetById,
+);
+
+// User's registered events
+router.get(
+  "/registrations/my",
+  authMiddleware,
+  roleMiddleware("USER"),
+  eventController.eventGetUserRegistrations,
+);
+
 
 module.exports = router;
