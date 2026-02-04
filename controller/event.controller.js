@@ -59,7 +59,9 @@ const eventCreate = async (req, res) => {
 
 const eventGetAll = async (req, res) => {
   try {
-    const events = await Event.find();
+    const events = await Event.find({
+      status: { $ne: "ARCHIVED" },
+    });
     res.status(200).json({ events });
   } catch (error) {
     console.error("Error fetching events:", error);
@@ -132,8 +134,9 @@ const eventGetById = async (req, res) => {
 
 const eventGetUserRegistrations = async (req, res) => {
   try {
-    const registrations = await registerationModel
-      .find({ userId: req.user._id });
+    const registrations = await registerationModel.find({
+      userId: req.user._id,
+    });
     res.status(200).json({ registrations });
   } catch (error) {
     console.error("Error fetching user registrations:", error);
@@ -141,4 +144,11 @@ const eventGetUserRegistrations = async (req, res) => {
   }
 };
 
-module.exports = { eventCreate, eventGetAll, eventUserRegister, eventDeletion, eventGetById, eventGetUserRegistrations };
+module.exports = {
+  eventCreate,
+  eventGetAll,
+  eventUserRegister,
+  eventDeletion,
+  eventGetById,
+  eventGetUserRegistrations,
+};
