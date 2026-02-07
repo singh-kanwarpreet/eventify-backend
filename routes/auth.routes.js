@@ -56,6 +56,6 @@ router.post(
 
 router.get("/user/logout", authController.logOut);
 
-router.get("/remember-me",authMiddleware, authController.rememberMe);
+router.get("/remember-me", authMiddleware, authController.rememberMe);
 
 module.exports = router;

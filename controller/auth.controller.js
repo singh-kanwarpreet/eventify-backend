@@ -136,6 +136,6 @@ const rememberMe = async (req, res) => {
       name: user.name,
     },
   });
-}
+};
 
 module.exports = { signup, login, logOut, rememberMe };
