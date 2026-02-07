@@ -134,9 +134,11 @@ const eventGetById = async (req, res) => {
 
 const eventGetUserRegistrations = async (req, res) => {
   try {
-    const registrations = await registerationModel.find({
-      userId: req.user._id,
-    });
+    const registrations = await registerationModel
+      .find({
+        userId: req.user._id,
+      })
+      .populate("eventId");
     res.status(200).json({ registrations });
   } catch (error) {
     console.error("Error fetching user registrations:", error);

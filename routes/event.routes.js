@@ -80,5 +80,4 @@ router.get(
   eventController.eventGetUserRegistrations,
 );
 
-
 module.exports = router;
