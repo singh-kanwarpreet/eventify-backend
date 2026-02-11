@@ -23,7 +23,8 @@
     "multer": "^2.0.2",
     "multer-storage-cloudinary": "^4.0.0",
     "node-cron": "^4.2.1",
-    "nodemailer": "^7.0.12"
+    "nodemailer": "^7.0.12",
+    "puppeteer": "^24.37.2"
   },
   "devDependencies": {
     "prettier": "^3.7.4"

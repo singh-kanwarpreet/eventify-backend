@@ -80,4 +80,33 @@ router.get(
   eventController.eventGetUserRegistrations,
 );
 
+// list of users registered for an event
+router.get(
+  "/:eventId/registrations",
+  authMiddleware,
+  roleMiddleware("ORGANIZER"),
+  [param("eventId").isMongoId().withMessage("Invalid event ID")],
+  handleValidationErrors,
+  eventController.eventGetEventRegistrations,
+);
+
+// mark attendance in bulk
+router.post(
+  "/:eventId/registrations/mark-attendance",
+  authMiddleware,
+  roleMiddleware("ORGANIZER"),
+  [param("eventId").isMongoId().withMessage("Invalid event ID")],
+  body("attendance")
+    .isArray({ min: 1 })
+    .withMessage("Attendance data must be a non-empty array"),
+  body("attendance.*.id")
+    .isMongoId()
+    .withMessage("Each attendance entry must have a valid registration ID"),
+  body("attendance.*.attended")
+    .isBoolean()
+    .withMessage("Each attendance entry must have an attended boolean"),
+  handleValidationErrors,
+  eventController.markAttendanceBulk,
+);
+
 module.exports = router;

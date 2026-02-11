@@ -146,6 +146,58 @@ const eventGetUserRegistrations = async (req, res) => {
   }
 };
 
+const eventGetEventRegistrations = async (req, res) => {
+  const { eventId } = req.params;
+  try {
+    const { _id } = req.user;
+    const event = await Event.findById(eventId);
+    if (!event) {
+      return res.status(404).json({ message: "Event not found" });
+    }
+    if (event.organizerId.toString() !== _id.toString()) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    const registrations = await registerationModel
+      .find({
+        eventId,
+      })
+      .populate("userId", "name email");
+    res.status(200).json({ registrations });
+  } catch (error) {
+    console.error("Error fetching event registrations:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
+const markAttendanceBulk = async (req, res) => {
+  const { eventId } = req.params;
+  const { attendance } = req.body;
+  try {
+    const { _id } = req.user;
+    const event = await Event.findById(eventId);
+    if (!event) {
+      return res.status(404).json({ message: "Event not found" });
+    }
+    if (event.organizerId.toString() !== _id.toString()) {
+      return res.status(403).json({ message: "Access denied" });
+    }
+
+    const bulkOps = attendance.map((entry) => ({
+      updateOne: {
+        filter: { _id: entry.id, eventId },
+        update: { attended: entry.attended },
+      },
+    }));
+
+    await registerationModel.bulkWrite(bulkOps);
+    res.status(200).json({ message: "Attendance marked successfully" });
+  } catch (error) {
+    console.error("Error marking attendance:", error);
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
 module.exports = {
   eventCreate,
   eventGetAll,
@@ -153,4 +205,6 @@ module.exports = {
   eventDeletion,
   eventGetById,
   eventGetUserRegistrations,
+  eventGetEventRegistrations,
+  markAttendanceBulk,
 };

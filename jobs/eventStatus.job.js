@@ -1,7 +1,9 @@
 const cron = require("node-cron");
 const Event = require("../models/Event");
 const Registration = require("../models/Registration");
+const Organizer = require("../models/Organizer");
 const { sendEmail } = require("../services/email.service");
+const generateCertificate = require("../utils/generateCertificate");
 
 // Run every 5 minutes
 cron.schedule("* * * * *", async () => {
@@ -11,22 +13,54 @@ cron.schedule("* * * * *", async () => {
     // Fetch events that are upcoming or ongoing
     const events = await Event.find({
       status: { $in: ["UPCOMING", "ONGOING"] },
-    });
+    }).populate("organizerId");
 
     for (const event of events) {
       const startTime = new Date(event.startTime);
       const endTime = new Date(event.endTime);
 
-      // 1️⃣ Update event status
+      // Update the event status
       if (now >= startTime && now <= endTime && event.status !== "ONGOING") {
         event.status = "ONGOING";
         await event.save();
       } else if (now > endTime && event.status !== "COMPLETED") {
         event.status = "COMPLETED";
         await event.save();
+
+        // send certificates
+        const attendees = await Registration.find({
+          eventId: event._id,
+          attended: true,
+          certificateSent: false,
+        }).populate("userId");
+        const organizerName = await Organizer.findOne({ managedBy: event.organizerId }).select("organizationName");
+        console.log("organizer's name", organizerName);  
+        for (const reg of attendees) {
+          const pdfBuffer = await generateCertificate(
+            reg.userId.name,
+            event.title,
+            new Date(event.endTime).toDateString(),
+            organizerName,
+          );
+
+          await sendEmail({
+            to: reg.userId.email,
+            subject: "Your Certificate for " + event.title,
+            text: "Thanks for participating!",
+            attachments: [
+              {
+                filename: "certificate.pdf",
+                content: pdfBuffer,
+              },
+            ],
+          });
+
+          reg.certificateSent = true;
+          await reg.save();
+        }
       }
 
-      // 2️⃣ Send reminder 1 hour before event
+      // Send reminder 1 hour before event
       const diffMinutes = (startTime - now) / 1000 / 60;
 
       if (diffMinutes <= 60 && diffMinutes >= 0) {
