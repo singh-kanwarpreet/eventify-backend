@@ -67,7 +67,7 @@ const eventSchema = new mongoose.Schema(
 
     organizerId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Organizer",
+      ref: "User",
       required: true,
     },
 
