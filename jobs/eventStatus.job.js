@@ -1,116 +1,136 @@
 const cron = require("node-cron");
+
 const Event = require("../models/Event");
 const Registration = require("../models/Registration");
 const Organizer = require("../models/Organizer");
+
 const { sendEmail } = require("../services/email.service");
 const generateCertificate = require("../utils/generateCertificate");
+const reminderTemplate = require("../utils/reminderTemplate");
 
-// Run every 5 minutes
-cron.schedule("* * * * *", async () => {
+
+cron.schedule("*/5 * * * *", async () => {
   try {
     const now = new Date();
 
-    // Fetch events that are upcoming or ongoing
+    // Fetching upcoming/ongoing events and organizer user
+
     const events = await Event.find({
       status: { $in: ["UPCOMING", "ONGOING"] },
-    }).populate("organizerId");
+    }).populate("organizerId", "name email");
+
+    if (!events.length) return;
+
+    
+    const userIds = events.map((e) => e.organizerId._id);
+
+    const organizers = await Organizer.find({
+      managedBy: { $in: userIds },
+    }).select("organizationName managedBy");
+
+    // Map: userId → organizationName
+    const organizerMap = {};
+    organizers.forEach((org) => {
+      organizerMap[org.managedBy.toString()] = org.organizationName;
+    });
+
+    
+    // Process each event
 
     for (const event of events) {
       const startTime = new Date(event.startTime);
       const endTime = new Date(event.endTime);
 
-      // Update the event status
+      const organizationName =
+        organizerMap[event.organizerId._id.toString()] || "Organizer";
+
+      // STATUS UPDATE
+
       if (now >= startTime && now <= endTime && event.status !== "ONGOING") {
         event.status = "ONGOING";
         await event.save();
-      } else if (now > endTime && event.status !== "COMPLETED") {
+      }
+
+      // send certificates and mark event as completed
+      else if (now > endTime && event.status !== "COMPLETED") {
         event.status = "COMPLETED";
         await event.save();
 
-        // send certificates
         const attendees = await Registration.find({
           eventId: event._id,
           attended: true,
           certificateSent: false,
-        }).populate("userId");
-        const organizerName = await Organizer.findOne({ managedBy: event.organizerId }).select("organizationName");
-        console.log("organizer's name", organizerName);  
-        for (const reg of attendees) {
-          const pdfBuffer = await generateCertificate(
-            reg.userId.name,
-            event.title,
-            new Date(event.endTime).toDateString(),
-            organizerName,
+        }).populate("userId", "name email");
+
+        if (attendees.length) {
+          await Promise.all(
+            attendees.map(async (reg) => {
+              const pdfBuffer = await generateCertificate(
+                reg.userId.name,
+                event.title,
+                endTime.toDateString(),
+                organizationName
+              );
+
+              await sendEmail({
+                to: reg.userId.email,
+                subject: `Your Certificate for ${event.title}`,
+                text: "Thanks for participating!",
+                attachments: [
+                  {
+                    filename: "certificate.pdf",
+                    content: pdfBuffer,
+                  },
+                ],
+              });
+            })
           );
 
-          await sendEmail({
-            to: reg.userId.email,
-            subject: "Your Certificate for " + event.title,
-            text: "Thanks for participating!",
-            attachments: [
-              {
-                filename: "certificate.pdf",
-                content: pdfBuffer,
-              },
-            ],
-          });
-
-          reg.certificateSent = true;
-          await reg.save();
+          // batch update
+          await Registration.updateMany(
+            { _id: { $in: attendees.map((a) => a._id) } },
+            { $set: { certificateSent: true } }
+          );
         }
       }
-
-      // Send reminder 1 hour before event
       const diffMinutes = (startTime - now) / 1000 / 60;
 
-      if (diffMinutes <= 60 && diffMinutes >= 0) {
+      if (diffMinutes <= 60 && diffMinutes > 55) {
         const registrations = await Registration.find({
           eventId: event._id,
           reminderSent: false,
-        }).populate("userId");
+        }).populate("userId", "name email");
 
-        for (const reg of registrations) {
-          const user = reg.userId;
-          if (!user) continue;
+        if (registrations.length) {
+          await Promise.all(
+            registrations.map(async (reg) => {
+              await sendEmail({
+                to: reg.userId.email,
+                subject: `Reminder: "${event.title}" starts soon!`,
+                text: `Your event starts soon`,
+                html: reminderTemplate({
+                  name: reg.userId.name,
+                  title: event.title,
+                  startTime: startTime.toLocaleString(),
+                  endTime: endTime.toLocaleString(),
+                  location: event.location,
+                  mode: event.mode,
+                  imageUrl: event.image?.url,
+                  availableSeats: event.availableSeats,
+                }),
+              });
+            })
+          );
 
-          try {
-            // Beautiful email template
-            await sendEmail({
-              to: user.email,
-              subject: `Reminder: "${event.title}" starts soon!`,
-              text: `Hi ${user.name}, your event "${event.title}" starts at ${event.startTime}.`,
-              html: `
-                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; border: 1px solid #ddd; border-radius: 8px; overflow: hidden;">
-                  <div style="background-color: #4CAF50; color: white; padding: 20px; text-align: center;">
-                    <h2 style="margin: 0;">Event Reminder</h2>
-                  </div>
-                  <div style="padding: 20px; color: #333;">
-                    <p>Hi <strong>${user.name}</strong>,</p>
-                    <p>Your event "<strong>${event.title}</strong>" starts in less than an hour!</p>
-                    ${event.image?.url ? `<img src="${event.image.url}" alt="${event.title}" style="width:100%; max-height: 200px; object-fit: cover; border-radius: 8px; margin-bottom: 15px;">` : ""}
-                    <table style="width:100%; margin-bottom:15px; border-collapse: collapse;">
-                      <tr><td style="padding:8px; font-weight:bold;">Start Time:</td><td style="padding:8px;">${startTime.toLocaleString()}</td></tr>
-                      <tr><td style="padding:8px; font-weight:bold;">End Time:</td><td style="padding:8px;">${endTime.toLocaleString()}</td></tr>
-                      <tr><td style="padding:8px; font-weight:bold;">Location:</td><td style="padding:8px;">${event.location} (${event.mode})</td></tr>
-                      <tr><td style="padding:8px; font-weight:bold;">Available Seats:</td><td style="padding:8px;">${event.availableSeats}</td></tr>
-                    </table>
-                    <p style="text-align:center;">
-                    </p>
-                    <p style="font-size:12px; color:#777; margin-top:20px;">This is an automated reminder. Please do not reply.</p>
-                  </div>
-                </div>
-              `,
-            });
-
-            // Mark reminder as sent
-            reg.reminderSent = true;
-            await reg.save();
-          } catch (err) {
-            console.error(`Failed to send email to ${user.email}`, err);
-          }
+          // batch update
+          await Registration.updateMany(
+            { _id: { $in: registrations.map((r) => r._id) } },
+            { $set: { reminderSent: true } }
+          );
         }
       }
     }
+
   } catch (err) {
     console.error("Event cron job error:", err);
   }
