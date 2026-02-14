@@ -16,6 +16,7 @@ const organizerSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    totalRating: { type: Number, default: 0 },
     reviewCount: {
       type: Number,
       default: 0,
