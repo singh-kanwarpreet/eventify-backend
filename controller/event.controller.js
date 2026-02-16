@@ -59,10 +59,30 @@ const eventCreate = async (req, res) => {
 
 const eventGetAll = async (req, res) => {
   try {
-    const events = await Event.find({
-      status: { $ne: "ARCHIVED" },
+    let { page = 1, limit = 6 } = req.query;
+    page = parseInt(page);
+    limit = parseInt(limit);
+
+    const totalEvents = await Event.countDocuments({
+      status: { $nin: ["ARCHIVED", "COMPLETED"] },
     });
-    res.status(200).json({ events });
+
+    const events = await Event.find({
+      status: { $nin: ["ARCHIVED", "COMPLETED"] },
+    })
+      .sort({ startTime: 1 })
+      .skip((page - 1) * limit)
+      .limit(limit);
+
+    res.status(200).json({
+      events,
+      pagination: {
+        total: totalEvents,
+        page,
+        limit,
+        totalPages: Math.ceil(totalEvents / limit),
+      },
+    });
   } catch (error) {
     console.error("Error fetching events:", error);
     res.status(500).json({ message: "Internal Server Error" });
@@ -132,14 +152,39 @@ const eventGetById = async (req, res) => {
   }
 };
 
+// eventGetUserRegistrations
 const eventGetUserRegistrations = async (req, res) => {
   try {
+    let { page = 1, limit = 6, status } = req.query;
+    page = parseInt(page);
+    limit = parseInt(limit);
+
+    const filter = { userId: req.user._id };
+    if (status) filter["eventId.status"] = status;
+
+    const totalRegistrations = await registerationModel.countDocuments(filter);
+
     const registrations = await registerationModel
-      .find({
-        userId: req.user._id,
+      .find({ userId: req.user._id })
+      .populate({
+        path: "eventId",
+        match: status ? { status } : {},
       })
-      .populate("eventId");
-    res.status(200).json({ registrations });
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .sort({ createdAt: -1 });
+      
+      const filtered = registrations.filter(r => r.eventId);
+
+      res.status(200).json({
+      registrations: filtered,
+      pagination: {
+        total: totalRegistrations,
+        page,
+        limit,
+        totalPages: Math.ceil(totalRegistrations / limit),
+      },
+    });
   } catch (error) {
     console.error("Error fetching user registrations:", error);
     res.status(500).json({ message: "Internal Server Error" });
