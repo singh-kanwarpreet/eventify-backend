@@ -9,7 +9,7 @@ const cors = require("cors");
 
 app.use(
   cors({
-    origin: "https://even-management-frontend.vercel.app/",
+    origin: "https://even-management-frontend.vercel.app",
     credentials: true,
   }),
 );
