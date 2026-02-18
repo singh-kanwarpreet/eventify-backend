@@ -39,15 +39,6 @@ router.post(
   eventController.eventCreate,
 );
 
-// Deletion of events
-router.delete(
-  "/organizer/delete/:eventId",
-  authMiddleware,
-  roleMiddleware("ORGANIZER"),
-  [param("eventId").isMongoId().withMessage("Invalid event ID")],
-  handleValidationErrors,
-  eventController.eventDeletion,
-);
 
 // List of events
 router.get("/", eventController.eventGetAll);
@@ -90,23 +81,6 @@ router.get(
   eventController.eventGetEventRegistrations,
 );
 
-// mark attendance in bulk
-router.post(
-  "/:eventId/registrations/mark-attendance",
-  authMiddleware,
-  roleMiddleware("ORGANIZER"),
-  [param("eventId").isMongoId().withMessage("Invalid event ID")],
-  body("attendance")
-    .isArray({ min: 1 })
-    .withMessage("Attendance data must be a non-empty array"),
-  body("attendance.*.id")
-    .isMongoId()
-    .withMessage("Each attendance entry must have a valid registration ID"),
-  body("attendance.*.attended")
-    .isBoolean()
-    .withMessage("Each attendance entry must have an attended boolean"),
-  handleValidationErrors,
-  eventController.markAttendanceBulk,
-);
+
 
 module.exports = router;

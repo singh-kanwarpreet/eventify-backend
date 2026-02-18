@@ -4,6 +4,7 @@ const cookieParser = require("cookie-parser");
 const authRouter = require("./routes/auth.routes");
 const eventRouter = require("./routes/event.routes");
 const reviewRouter = require("./routes/organizerReview.routes");
+const organizerDashboardRouter = require("./routes/organizerDashboard.routes");
 const cors = require("cors");
 
 app.use(
@@ -18,6 +19,7 @@ app.use(cookieParser());
 app.use("/api/auth", authRouter);
 app.use("/api/events", eventRouter);
 app.use("/api/reviews", reviewRouter);
+app.use("/api/organizer", organizerDashboardRouter);
 app.get("/", (req, res) => {
   res.send("This is working");
 });

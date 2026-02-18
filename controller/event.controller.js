@@ -33,6 +33,16 @@ const eventCreate = async (req, res) => {
     if (req.file) {
       imageData = await uploadToCloudStorage(req.file);
     }
+    if(startTimeUTC >= endTimeUTC) {
+      return res.status(400).json({
+        message: "Event end time must be after start time.",
+      });
+    }
+    let status = null;
+    if(new Date(startTimeUTC) < new Date()) {
+      status = "ONGOING";
+    }
+    
     const event = await Event.create({
       title,
       description,
@@ -41,7 +51,7 @@ const eventCreate = async (req, res) => {
       location,
       mode,
       capacity,
-      status: "UPCOMING",
+      status: status || "UPCOMING",
       organizerId: req.user._id,
       eligibilityRules: eligibilityRules || { minAge: 0, maxAge: 100 },
       ...(imageData && { image: imageData }),
@@ -111,21 +121,7 @@ const eventUserRegister = async (req, res) => {
   }
 };
 
-const eventDeletion = async (req, res) => {
-  try {
-    const eventId = req.params.eventId;
-    const result = await Event.findByIdAndDelete(eventId);
-    if (result) {
-      if (result.image && result.image.publicId) {
-        await deleteFromCloudStorage(result.image.publicId);
-      }
-      return res.status(201).json({ message: "Event deleted successfully" });
-    }
-  } catch (error) {
-    console.error("Error deleting event:", error);
-    res.status(500).json({ message: "Internal Server Error" });
-  }
-};
+
 
 const eventGetById = async (req, res) => {
   const { eventId } = req.params;
@@ -215,41 +211,12 @@ const eventGetEventRegistrations = async (req, res) => {
   }
 };
 
-const markAttendanceBulk = async (req, res) => {
-  const { eventId } = req.params;
-  const { attendance } = req.body;
-  try {
-    const { _id } = req.user;
-    const event = await Event.findById(eventId);
-    if (!event) {
-      return res.status(404).json({ message: "Event not found" });
-    }
-    if (event.organizerId.toString() !== _id.toString()) {
-      return res.status(403).json({ message: "Access denied" });
-    }
-
-    const bulkOps = attendance.map((entry) => ({
-      updateOne: {
-        filter: { _id: entry.id, eventId },
-        update: { attended: entry.attended },
-      },
-    }));
-
-    await registerationModel.bulkWrite(bulkOps);
-    res.status(200).json({ message: "Attendance marked successfully" });
-  } catch (error) {
-    console.error("Error marking attendance:", error);
-    res.status(500).json({ message: "Internal Server Error" });
-  }
-};
 
 module.exports = {
   eventCreate,
   eventGetAll,
   eventUserRegister,
-  eventDeletion,
   eventGetById,
   eventGetUserRegistrations,
   eventGetEventRegistrations,
-  markAttendanceBulk,
 };
