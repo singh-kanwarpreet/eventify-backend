@@ -9,7 +9,7 @@ const cors = require("cors");
 
 app.use(
   cors({
-    origin: "https://eventify-online.vercel.app",
+    origin: process.env.FRONTEND_URL,
     credentials: true,
   }),
 );
