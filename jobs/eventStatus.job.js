@@ -90,6 +90,11 @@ cron.schedule("* * * * *", async () => {
           );
         }
       }
+
+      // reminder emails for events starting in the next hour
+      console.log("Server Time:", now);
+      console.log("Event Time:", startTime);
+      console.log("Diff Minutes:", diffMinutes);
       const diffMinutes = (startTime - now) / 1000 / 60;
 
       if (diffMinutes <= 60 && diffMinutes > 0) {
