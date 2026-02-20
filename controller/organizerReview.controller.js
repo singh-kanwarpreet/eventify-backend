@@ -38,8 +38,8 @@ const createReview = async (req, res) => {
   const { organizerId } = req.params;
   const { rating, comment } = req.body;
   const userId = req.user._id;
+  const userName = req.user.name;
 
-  // Input validation
   if (!rating || rating < 1 || rating > 5) {
     return res.status(400).json({ error: "Rating must be between 1 and 5" });
   }
@@ -59,7 +59,7 @@ const createReview = async (req, res) => {
     });
     await newReview.save();
 
-    const updatedOrganizer = await Organizer.findByIdAndUpdate(
+    await Organizer.findByIdAndUpdate(
       organizerId,
       [
         {
@@ -77,7 +77,15 @@ const createReview = async (req, res) => {
       { new: true, updatePipeline: true },
     );
 
-    res.status(201).json(newReview);
+    const reviewWithUser = {
+      ...newReview.toObject(),
+      userId: {
+        _id: userId,
+        name: userName,
+      },
+    };
+
+    res.status(201).json(reviewWithUser);
   } catch (error) {
     console.error("Error creating review:", error);
     res.status(500).json({ error: "Failed to create review" });
