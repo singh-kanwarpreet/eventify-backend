@@ -8,7 +8,7 @@ const { sendEmail } = require("../services/email.service");
 const generateCertificate = require("../utils/generateCertificate");
 const reminderTemplate = require("../utils/reminderTemplate");
 
-cron.schedule("* * * * *", async () => {
+cron.schedule("* * * * * *", async () => {
   try {
     const now = new Date();
 
@@ -92,12 +92,12 @@ cron.schedule("* * * * *", async () => {
       }
 
       // reminder emails for events starting in the next hour
-      console.log("Server Time:", now);
+      
+      const diffMinutes = (startTime - now) / 1000 / 60;
+console.log("Server Time:", now);
       console.log("Event Time:", startTime);
       console.log("Diff Minutes:", diffMinutes);
-      const diffMinutes = (startTime - now) / 1000 / 60;
-
-      if (diffMinutes <= 60 && diffMinutes > 0) {
+      if (diffMinutes <= 60 && diffMinutes >= 0) {
         const registrations = await Registration.find({
           eventId: event._id,
           reminderSent: false,
