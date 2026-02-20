@@ -8,7 +8,6 @@ const { sendEmail } = require("../services/email.service");
 const generateCertificate = require("../utils/generateCertificate");
 const reminderTemplate = require("../utils/reminderTemplate");
 
-
 cron.schedule("* * * * *", async () => {
   try {
     const now = new Date();
@@ -21,7 +20,6 @@ cron.schedule("* * * * *", async () => {
 
     if (!events.length) return;
 
-    
     const userIds = events.map((e) => e.organizerId._id);
 
     const organizers = await Organizer.find({
@@ -34,7 +32,6 @@ cron.schedule("* * * * *", async () => {
       organizerMap[org.managedBy.toString()] = org.organizationName;
     });
 
-    
     // Process each event
 
     for (const event of events) {
@@ -69,7 +66,7 @@ cron.schedule("* * * * *", async () => {
                 reg.userId.name,
                 event.title,
                 endTime.toDateString(),
-                organizationName
+                organizationName,
               );
 
               await sendEmail({
@@ -83,19 +80,19 @@ cron.schedule("* * * * *", async () => {
                   },
                 ],
               });
-            })
+            }),
           );
 
           // batch update
           await Registration.updateMany(
             { _id: { $in: attendees.map((a) => a._id) } },
-            { $set: { certificateSent: true } }
+            { $set: { certificateSent: true } },
           );
         }
       }
       const diffMinutes = (startTime - now) / 1000 / 60;
 
-      if (diffMinutes <= 60 && diffMinutes > 55) {
+      if (diffMinutes <= 60 && diffMinutes > 0) {
         const registrations = await Registration.find({
           eventId: event._id,
           reminderSent: false,
@@ -119,18 +116,17 @@ cron.schedule("* * * * *", async () => {
                   availableSeats: event.availableSeats,
                 }),
               });
-            })
+            }),
           );
 
           // batch update
           await Registration.updateMany(
             { _id: { $in: registrations.map((r) => r._id) } },
-            { $set: { reminderSent: true } }
+            { $set: { reminderSent: true } },
           );
         }
       }
     }
-
   } catch (err) {
     console.error("Event cron job error:", err);
   }
