@@ -94,9 +94,7 @@ cron.schedule("* * * * *", async () => {
       // reminder emails for events starting in the next hour
       
       const diffMinutes = (startTime - now) / 1000 / 60;
-console.log("Server Time:", now);
-      console.log("Event Time:", startTime);
-      console.log("Diff Minutes:", diffMinutes);
+
       if (diffMinutes <= 60 && diffMinutes >= 0) {
         const registrations = await Registration.find({
           eventId: event._id,
