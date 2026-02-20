@@ -8,7 +8,7 @@ const { sendEmail } = require("../services/email.service");
 const generateCertificate = require("../utils/generateCertificate");
 const reminderTemplate = require("../utils/reminderTemplate");
 
-cron.schedule("* * * * * *", async () => {
+cron.schedule("* * * * *", async () => {
   try {
     const now = new Date();
 
