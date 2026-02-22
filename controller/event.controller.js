@@ -38,9 +38,11 @@ const eventCreate = async (req, res) => {
         message: "Event end time must be after start time.",
       });
     }
-    let status = null;
-    if(new Date(startTimeUTC) < new Date()) {
-      status = "ONGOING";
+  
+    if(new Date(startTimeUTC) <= new Date()) {
+      return res.status(400).json({
+        message: "Event start time must be after current time.",
+      });
     }
     
     const event = await Event.create({
@@ -51,7 +53,6 @@ const eventCreate = async (req, res) => {
       location,
       mode,
       capacity,
-      status: status || "UPCOMING",
       organizerId: req.user._id,
       eligibilityRules: eligibilityRules || { minAge: 0, maxAge: 100 },
       ...(imageData && { image: imageData }),
