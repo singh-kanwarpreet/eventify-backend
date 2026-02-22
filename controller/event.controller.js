@@ -30,9 +30,7 @@ const eventCreate = async (req, res) => {
         message: "You have already created an event with this title.",
       });
     }
-    if (req.file) {
-      imageData = await uploadToCloudStorage(req.file);
-    }
+    
     if(startTimeUTC >= endTimeUTC) {
       return res.status(400).json({
         message: "Event end time must be after start time.",
@@ -43,6 +41,10 @@ const eventCreate = async (req, res) => {
       return res.status(400).json({
         message: "Event start time must be after current time.",
       });
+    }
+
+    if (req.file) {
+      imageData = await uploadToCloudStorage(req.file);
     }
     
     const event = await Event.create({
