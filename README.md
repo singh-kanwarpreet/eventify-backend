@@ -12,7 +12,7 @@
 - [Architecture](#architecture)  
 - [Setup & Installation](#setup--installation)  
 - [Environment Variables](#env)  
-- [API Endpoints](#api-endpoints)  
+- [API Endpoints](#main-api-endpoints)  
 - [Cron Jobs & Automation](#cron-jobs--automation)  
 
 ---
