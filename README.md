@@ -11,7 +11,7 @@
 - [Tech Stack](#tech-stack)  
 - [Architecture](#architecture)  
 - [Setup & Installation](#setup--installation)  
-- [Environment Variables](#environment-variables)  
+- [Environment Variables](#env)  
 - [API Endpoints](#api-endpoints)  
 - [Cron Jobs & Automation](#cron-jobs--automation)  
 
