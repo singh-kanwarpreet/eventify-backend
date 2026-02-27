@@ -13,7 +13,6 @@
 - [Setup & Installation](#setup--installation)  
 - [Environment Variables](#env)  
 - [API Endpoints](#main-api-endpoints)  
-- [Cron Jobs & Automation](#cron-jobs--automation)  
 
 ---
 
